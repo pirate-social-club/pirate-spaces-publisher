@@ -7,7 +7,7 @@ import (
 	"slices"
 	"strings"
 
-	fabric "github.com/spacesprotocol/fabric-go"
+	fabric "github.com/pirate-social-club/pirate-spaces-publisher/internal/fabric-go"
 	libveritas "github.com/spacesprotocol/libveritas-go"
 	"golang.org/x/text/unicode/norm"
 )

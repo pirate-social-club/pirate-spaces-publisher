@@ -13,7 +13,7 @@ import (
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcutil/hdkeychain"
 	"github.com/btcsuite/btcd/txscript"
-	fabric "github.com/spacesprotocol/fabric-go"
+	fabric "github.com/pirate-social-club/pirate-spaces-publisher/internal/fabric-go"
 	libveritas "github.com/spacesprotocol/libveritas-go"
 )
 
@@ -298,7 +298,7 @@ func resolvePublishSecretKey(context *resolvedHandleContext, walletExportPath st
 		}
 		return secretKey, nil, "secret_key", nil
 	default:
-		return nil, nil, "", errors.New("publish requires either --wallet-export or --secret-key")
+		return nil, nil, "", errors.New("publish requires --wallet-export /path/to/wallet-export.json; quote the path if it has spaces")
 	}
 }
 

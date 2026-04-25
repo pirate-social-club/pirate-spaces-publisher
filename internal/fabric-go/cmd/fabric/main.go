@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	fabric "github.com/spacesprotocol/fabric-go"
+	fabric "github.com/pirate-social-club/pirate-spaces-publisher/internal/fabric-go"
 	libveritas "github.com/spacesprotocol/libveritas-go"
 )
 
@@ -51,7 +51,8 @@ func main() {
 		seeds = fabric.DefaultSeeds
 	}
 
-	f := fabric.New(seeds)
+	f := fabric.New()
+	f.SetSeeds(seeds)
 	if devMode {
 		f.SetDevMode(true)
 	}
