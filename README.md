@@ -22,7 +22,7 @@ The wallet export produced by `space-cli exportwallet` contains private xprv mat
 The Pirate site should generate a command like this:
 
 ```bash
-go run github.com/pirate-social-club/pirate-spaces-publisher@latest publish '@your-space' \
+go run github.com/pirate-social-club/pirate-spaces-publisher@v0.1.0 publish '@your-space' \
   --wallet-export '/full/path/to/your-wallet-export.json' \
   --web 'https://pirate.sc/c/@your-space' \
   --freedom 'https://pirate.sc/c/@your-space' \
