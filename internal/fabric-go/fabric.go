@@ -598,7 +598,7 @@ func (f *Fabric) ResolveAll(handles []string) (ResolvedBatch, error) {
 			return ResolvedBatch{}, fmt.Errorf("lookup advance: %w", err)
 		}
 		allZones = append(allZones, zones...)
-		roots = append(roots, hex.EncodeToString(verified.RootId()))
+		roots = append(roots, rootsFromZones(zones)...)
 		batch = next
 	}
 
@@ -608,6 +608,23 @@ func (f *Fabric) ResolveAll(handles []string) (ResolvedBatch, error) {
 	}
 
 	return ResolvedBatch{Zones: expanded, Roots: roots}, nil
+}
+
+func rootsFromZones(zones []libveritas.Zone) []string {
+	seen := make(map[string]struct{})
+	roots := make([]string, 0, len(zones))
+	for _, zone := range zones {
+		if len(zone.AnchorHash) == 0 {
+			continue
+		}
+		root := hex.EncodeToString(zone.AnchorHash)
+		if _, ok := seen[root]; ok {
+			continue
+		}
+		seen[root] = struct{}{}
+		roots = append(roots, root)
+	}
+	return roots
 }
 
 // Export resolves a handle and returns the raw certificate chain bytes.

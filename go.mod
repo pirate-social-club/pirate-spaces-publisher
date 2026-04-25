@@ -7,7 +7,7 @@ require (
 	github.com/btcsuite/btcd/btcec/v2 v2.3.6
 	github.com/btcsuite/btcd/btcutil v1.1.6
 	github.com/spacesprotocol/fabric-go v0.0.0
-	github.com/spacesprotocol/libveritas-go v0.0.0-dev.20260407170108
+	github.com/spacesprotocol/libveritas-go v0.2.0
 	golang.org/x/text v0.35.0
 )
 
