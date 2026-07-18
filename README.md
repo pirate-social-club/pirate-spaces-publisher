@@ -85,3 +85,13 @@ Advanced fallback:
 
 This repository vendors the small `fabric-go` compatibility patch needed by the current
 `libveritas-go` API.
+
+## Release artifacts
+
+The on-demand prebuild workflow publishes a Linux x64 archive and `SHA256SUMS`
+from an existing, immutable tag. It builds and executes the finished artifact
+inside separate digest-pinned Ubuntu 22.04 containers, matching the oldest
+supported VPS runtime. The workflow also uses a checksum-pinned Go toolchain,
+commit-pinned GitHub Actions, and a reproducible Go build. It refuses to
+replace an existing release. Consumers must pin both the release tag and
+archive digest, then verify the per-binary digest after extraction.
