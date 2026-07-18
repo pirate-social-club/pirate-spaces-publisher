@@ -19,7 +19,7 @@ type SpaceHint struct {
 
 type HintsResponse struct {
 	AnchorTip int           `json:"anchor_tip"`
-	Spaces    []SpaceHint   `json:"spaces"`
+	Spaces    []SpaceHint   `json:"hints"`
 	Epochs    []EpochResult `json:"epochs"`
 }
 
