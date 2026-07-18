@@ -1,0 +1,108 @@
+name: Linux x64 prebuild
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing release tag to publish
+        default: v0.1.1
+        required: true
+
+permissions:
+  contents: write
+
+env:
+  GO_VERSION: 1.25.0
+  GO_LINUX_AMD64_SHA256: 2852af0cb20a13139b3448992e69b868e50ed0f8a1e5940ee1de9e19a123b613
+
+jobs:
+  build-linux-x64:
+    runs-on: ubuntu-24.04
+    container: ubuntu:22.04@sha256:0d779ea97881505f5ef0039336ee85edba27519bdba968c284c86ee066a973c8
+    env:
+      TAG: ${{ inputs.release_tag }}
+    steps:
+      - name: Install build prerequisites
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends build-essential ca-certificates curl git
+      - name: Install pinned Go toolchain
+        run: |
+          curl --fail --location --silent --show-error \
+            "https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz" -o /tmp/go.tar.gz
+          echo "${GO_LINUX_AMD64_SHA256}  /tmp/go.tar.gz" | sha256sum -c -
+          tar -C /usr/local -xzf /tmp/go.tar.gz
+          echo /usr/local/go/bin >> "$GITHUB_PATH"
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.release_tag }}
+      - name: Verify release source
+        run: test "$(git rev-parse HEAD)" = "$(git rev-list -n 1 "$TAG")"
+      - name: Test and build
+        run: |
+          CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go test ./...
+          mkdir -p dist package/licenses
+          CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build \
+            -buildvcs=false -trimpath \
+            -ldflags='-s -w -buildid= -extldflags=-Wl,--build-id=none' \
+            -o dist/spaces-publisher .
+      - name: Package and checksum
+        run: |
+          chmod 0755 dist/spaces-publisher
+          cp dist/spaces-publisher package/
+          cp LICENSE package/licenses/spaces-publisher-MIT.txt
+          sha256sum package/spaces-publisher | sed 's#package/##' > SHA256SUMS
+          tar --sort=name --mtime='UTC 1970-01-01' --owner=0 --group=0 --numeric-owner \
+            -C package -czf spaces-publisher-linux-x64.tar.gz .
+          sha256sum spaces-publisher-linux-x64.tar.gz >> SHA256SUMS
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: spaces-publisher-${{ inputs.release_tag }}-linux-x64
+          path: |
+            spaces-publisher-linux-x64.tar.gz
+            SHA256SUMS
+          if-no-files-found: error
+
+  ubuntu-2204-execution-smoke:
+    needs: build-linux-x64
+    runs-on: ubuntu-24.04
+    container: ubuntu:22.04@sha256:0d779ea97881505f5ef0039336ee85edba27519bdba968c284c86ee066a973c8
+    steps:
+      - name: Install runtime prerequisites
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends ca-certificates coreutils tar
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: spaces-publisher-${{ inputs.release_tag }}-linux-x64
+      - name: Verify and execute on the ns1 host baseline
+        run: |
+          grep 'spaces-publisher-linux-x64.tar.gz$' SHA256SUMS | sha256sum -c -
+          mkdir package
+          tar -C package -xzf spaces-publisher-linux-x64.tar.gz
+          (cd package && sha256sum -c ../SHA256SUMS --ignore-missing)
+          test -x package/spaces-publisher
+          timeout 90 package/spaces-publisher resolve @pirate > resolve.json
+          grep -Fq '"handle":"@pirate"' resolve.json
+          grep -Eq '"root_pubkey":"[0-9a-f]{64}"' resolve.json
+
+  publish-release:
+    needs: ubuntu-2204-execution-smoke
+    runs-on: ubuntu-24.04
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      TAG: ${{ inputs.release_tag }}
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: spaces-publisher-${{ inputs.release_tag }}-linux-x64
+      - name: Publish immutable release
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "release already exists and will not be replaced: $TAG" >&2
+            exit 1
+          fi
+          gh release create "$TAG" --verify-tag --title "$TAG" \
+            spaces-publisher-linux-x64.tar.gz SHA256SUMS
