@@ -86,6 +86,11 @@ Advanced fallback:
 This repository vendors the small `fabric-go` compatibility patch needed by the current
 `libveritas-go` API.
 
+## License
+
+Pirate Spaces Publisher is licensed under AGPL-3.0-or-later. The release
+archive includes the project license notice.
+
 ## Release artifacts
 
 The on-demand prebuild workflow publishes a Linux x64 archive and `SHA256SUMS`
