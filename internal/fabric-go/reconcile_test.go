@@ -60,13 +60,15 @@ func TestAllRelaysStaleRemainsUndetectable(t *testing.T) {
 	}
 }
 
-func TestRequestedHandlesAndExplicitSeeds(t *testing.T) {
+func TestCrossHandleSubstitutionAndExplicitSeeds(t *testing.T) {
 	expected := requestedHandles(QueryRequest{Queries: []Query{{Space: "@alice"}}})
-	if _, ok := expected["@alice"]; !ok {
-		t.Fatal("requested handle missing")
+	matched, substitution := partitionRequestedZones([]libveritas.Zone{{Handle: "@bob"}}, expected)
+	if !substitution || len(matched) != 0 {
+		t.Fatalf("cross-handle response was not rejected: matched=%#v substitution=%v", matched, substitution)
 	}
-	if _, ok := expected["@bob"]; ok {
-		t.Fatal("cross-handle substitution admitted")
+	matched, substitution = partitionRequestedZones([]libveritas.Zone{{Handle: "@alice"}}, expected)
+	if substitution || len(matched) != 1 || matched[0].Handle != "@alice" {
+		t.Fatalf("requested handle was not admitted: matched=%#v substitution=%v", matched, substitution)
 	}
 	relays := selectQueryRelays([]string{"https://one/", "https://two"}, []string{"https://random-1", "https://random-2", "https://random-3"}, 4)
 	want := []string{"https://one", "https://two", "https://random-1", "https://random-2"}
