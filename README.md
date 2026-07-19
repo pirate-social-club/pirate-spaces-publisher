@@ -22,11 +22,12 @@ The wallet export produced by `space-cli exportwallet` contains private xprv mat
 The Pirate site should generate a command like this:
 
 ```bash
-go run github.com/pirate-social-club/pirate-spaces-publisher@v0.1.0 publish '@your-space' \
+go run github.com/pirate-social-club/pirate-spaces-publisher@v0.1.5 publish '@your-space' \
   --wallet-export '/full/path/to/your-wallet-export.json' \
   --web 'https://pirate.sc/c/@your-space' \
   --freedom 'https://pirate.sc/c/@your-space' \
-  --txt 'pirate-verify=pirate-space-verify=nvs_example:nonce'
+  --txt 'pirate-verify=pirate-space-verify=nvs_example:nonce' \
+  --signed-message-out '/full/path/to/@your-space-sequence-1.fabric-message'
 ```
 
 Paste it into a terminal on the computer that has the wallet export.
@@ -50,7 +51,8 @@ go run . publish '@your-space' \
   --wallet-export '/full/path/to/your-wallet-export.json' \
   --web 'https://pirate.sc/c/@your-space' \
   --freedom 'https://pirate.sc/c/@your-space' \
-  --txt 'pirate-verify=pirate-space-verify=nvs_example:nonce'
+  --txt 'pirate-verify=pirate-space-verify=nvs_example:nonce' \
+  --signed-message-out '/full/path/to/@your-space-sequence-1.fabric-message'
 ```
 
 Dry run first if you want to verify the wallet match without publishing:
@@ -82,6 +84,28 @@ Advanced fallback:
 
 - `--secret-key` expects the already tap-tweaked 32-byte BIP-340 secret key.
 - It does not accept an xprv or untweaked child key.
+
+## Retention and rebroadcast
+
+Use `--signed-message-out` on every non-dry-run `publish` or `clear`. The CLI creates the file
+exclusively with mode `0600` before attempting relay broadcast and refuses to overwrite an
+existing archive. The output reports the message SHA-256 so an operator can inventory immutable
+copies without inspecting their contents. If broadcast fails after signing, the archive remains
+available for retry.
+
+The retained message contains the exact public, signed Fabric publication—not wallet private
+material. It can therefore be copied to a rebroadcast host without moving the wallet export:
+
+```bash
+spaces-publisher rebroadcast \
+  --message-file '/full/path/to/@your-space-sequence-1.fabric-message' \
+  --seeds 'https://relay-cosmos.spacesprotocol.org,https://relay-atlas.spacesprotocol.org'
+```
+
+`rebroadcast` rejects missing, non-regular, empty, oversized, or structurally invalid message
+files. Relays still perform signature and chain validation. Retain older sequences for audit, but
+schedule rebroadcast only for the currently intended sequence; replaying an old valid archive can
+reintroduce stale state on relays that lost the newer publication.
 
 This repository vendors the small `fabric-go` compatibility patch needed by the current
 `libveritas-go` API.
