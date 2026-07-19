@@ -22,11 +22,12 @@ The wallet export produced by `space-cli exportwallet` contains private xprv mat
 The Pirate site should generate a command like this:
 
 ```bash
-go run github.com/pirate-social-club/pirate-spaces-publisher@v0.1.0 publish '@your-space' \
+go run github.com/pirate-social-club/pirate-spaces-publisher@v0.1.5 publish '@your-space' \
   --wallet-export '/full/path/to/your-wallet-export.json' \
   --web 'https://pirate.sc/c/@your-space' \
   --freedom 'https://pirate.sc/c/@your-space' \
-  --txt 'pirate-verify=pirate-space-verify=nvs_example:nonce'
+  --txt 'pirate-verify=pirate-space-verify=nvs_example:nonce' \
+  --signed-message-out '/full/path/to/@your-space-sequence-1.fabric-message'
 ```
 
 Paste it into a terminal on the computer that has the wallet export.
